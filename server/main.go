@@ -1,8 +1,12 @@
 package main
 
 import (
+	"github.com/jbrunsting/terminal-im/models"
+	"github.com/jbrunsting/terminal-im/utils"
+
 	"net/http"
 	"log"
+	"encoding/json"
 )
 
 func main() {
@@ -16,5 +20,13 @@ func main() {
 }
 
 func testHandler(w http.ResponseWriter, r *http.Request) {
-	log.Println("Got request!")
+	var room models.Room
+
+	d := json.NewDecoder(r.Body)
+	if err := d.Decode(&room); err != nil {
+		utils.SendError(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+    utils.SendSuccess(w, room, http.StatusOK)
 }
