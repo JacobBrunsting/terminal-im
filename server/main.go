@@ -10,6 +10,7 @@ import (
 
 	"github.com/jbrunsting/terminal-im/server/controllers"
 	"github.com/jbrunsting/terminal-im/server/router"
+	"github.com/jbrunsting/terminal-im/server/memstore"
 )
 
 func main() {
@@ -18,7 +19,7 @@ func main() {
 	port := viper.GetString("server.port")
 
 	r := mux.NewRouter()
-	rc := controllers.NewRoomController()
+	rc := controllers.NewRoomController(memstore.NewRoomStore())
 	router.Route(r.PathPrefix("/v1").Subrouter(), rc)
 
 	log.Printf("Listening on port %v", port)

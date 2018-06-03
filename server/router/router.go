@@ -18,7 +18,6 @@ func Route(
 
 	r.HandleFunc("/rooms", room.PostRoom).Methods(http.MethodPost)
 	r.HandleFunc("/rooms/{room}", room.GetRoom).Methods(http.MethodGet)
-	r.HandleFunc("/rooms/{room}", room.DeleteRoom).Methods(http.MethodDelete)
 }
 
 func GetHealth(w http.ResponseWriter, r *http.Request) {

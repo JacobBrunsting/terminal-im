@@ -9,19 +9,20 @@ import (
 
 	"github.com/jbrunsting/terminal-im/models"
 	"github.com/jbrunsting/terminal-im/utils"
+	"github.com/jbrunsting/terminal-im/server/memstore"
 )
 
 type RoomController interface {
 	PostRoom(w http.ResponseWriter, r *http.Request)
 	GetRoom(w http.ResponseWriter, r *http.Request)
-	DeleteRoom(w http.ResponseWriter, r *http.Request)
 }
 
 type roomController struct {
+	rooms memstore.RoomStore
 }
 
-func NewRoomController() RoomController {
-	return &roomController{}
+func NewRoomController(rooms memstore.RoomStore) RoomController {
+	return &roomController{rooms}
 }
 
 func (c *roomController) PostRoom(w http.ResponseWriter, r *http.Request) {
@@ -33,7 +34,18 @@ func (c *roomController) PostRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SendSuccess(w, room, http.StatusOK)
+	err = c.rooms.StoreRoom(&room)
+    if err != nil {
+		if memstore.IsNameConflict(err) {
+			utils.SendError(w, "Room name taken", http.StatusBadRequest)
+			return
+		} else {
+			utils.SendError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+    }
+
+	utils.SendSuccess(w, nil, http.StatusOK)
 }
 
 func (c *roomController) GetRoom(w http.ResponseWriter, r *http.Request) {
@@ -43,15 +55,16 @@ func (c *roomController) GetRoom(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SendSuccess(w, nil, http.StatusOK)
-}
+	room, err := c.rooms.RetrieveRoom(roomName)
+    if err != nil {
+		if memstore.IsNotFound(err) {
+			utils.SendError(w, "Room not found", http.StatusNotFound)
+			return
+		} else {
+			utils.SendError(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+    }
 
-func (c *roomController) DeleteRoom(w http.ResponseWriter, r *http.Request) {
-	roomName := mux.Vars(r)["room"]
-	if roomName == "" {
-		utils.SendError(w, "Room name required", http.StatusBadRequest)
-		return
-	}
-
-	utils.SendSuccess(w, nil, http.StatusNoContent)
+	utils.SendSuccess(w, room, http.StatusOK)
 }
