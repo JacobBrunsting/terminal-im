@@ -1,32 +1,36 @@
 package main
 
 import (
-	"github.com/jbrunsting/terminal-im/models"
-	"github.com/jbrunsting/terminal-im/utils"
-
-	"net/http"
+	"fmt"
 	"log"
-	"encoding/json"
+	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/spf13/viper"
+
+	"github.com/jbrunsting/terminal-im/server/controllers"
+	"github.com/jbrunsting/terminal-im/server/router"
 )
 
 func main() {
-	http.HandleFunc("/", testHandler)
+	getConfig()
 
-	log.Printf("Listening on port 8080")
-	err := http.ListenAndServe(":8080", nil)
-	if err != nil {
-		log.Println(err)
-	}
+	port := viper.GetString("server.port")
+
+	r := mux.NewRouter()
+	rc := controllers.NewRoomController()
+	router.Route(r.PathPrefix("/v1").Subrouter(), rc)
+
+	log.Printf("Listening on port %v", port)
+	log.Fatal(http.ListenAndServe(":"+port, r))
 }
 
-func testHandler(w http.ResponseWriter, r *http.Request) {
-	var room models.Room
+func getConfig() {
+	viper.SetConfigName("config")
+	viper.AddConfigPath(".")
 
-	d := json.NewDecoder(r.Body)
-	if err := d.Decode(&room); err != nil {
-		utils.SendError(w, err.Error(), http.StatusBadRequest)
-		return
+	err := viper.ReadInConfig()
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file: %v \n", err))
 	}
-
-    utils.SendSuccess(w, room, http.StatusOK)
 }
