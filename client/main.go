@@ -1,9 +1,55 @@
 package main
 
 import (
+	"flag"
 	"log"
+	"net/http"
+
+	"github.com/jbrunsting/terminal-im/client/requests"
+	"github.com/jbrunsting/terminal-im/models"
 )
 
 func main() {
-	log.Printf("Hello World!\n")
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
+	roomPtr := flag.String("room", "", "room being joined or created")
+	hostPtr := flag.String("host", "", "url of terminal-im instance being used")
+
+	flag.Parse()
+
+	if roomPtr == nil || *roomPtr == "" {
+		log.Fatalf("Parameter 'room' required")
+	}
+	room := *roomPtr
+
+	if hostPtr == nil || *hostPtr == "" {
+		log.Fatalf("Parameter 'host' required")
+	}
+	host := *hostPtr
+	if last := len(host) - 1; last > 0 && host[last] == '/' {
+		host = host[:last]
+	}
+
+	requester := requests.Requester{
+		BaseUrl: host,
+		Client:  &http.Client{},
+	}
+
+	err := requester.CreateRoom(room)
+	if err != nil {
+		if models.IsNameConflict(err) {
+			log.Fatalf("Room name taken")
+		}
+		log.Fatalf(err.Error())
+	}
+
+	roomObj, err := requester.RetrieveRoom(room)
+	if err != nil {
+		if models.IsNotFound(err) {
+			log.Fatalf("Room not found")
+		}
+		log.Fatalf(err.Error())
+	}
+
+	log.Printf("Room is %v\n", roomObj)
 }

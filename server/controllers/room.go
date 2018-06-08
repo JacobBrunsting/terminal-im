@@ -35,15 +35,15 @@ func (c *roomController) PostRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	err = c.rooms.StoreRoom(&room)
-    if err != nil {
-		if memstore.IsNameConflict(err) {
-			utils.SendError(w, "Room name taken", http.StatusBadRequest)
+	if err != nil {
+		if models.IsNameConflict(err) {
+			utils.SendError(w, "Room name taken", http.StatusConflict)
 			return
 		} else {
 			utils.SendError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-    }
+	}
 
 	utils.SendSuccess(w, nil, http.StatusOK)
 }
@@ -56,15 +56,15 @@ func (c *roomController) GetRoom(w http.ResponseWriter, r *http.Request) {
 	}
 
 	room, err := c.rooms.RetrieveRoom(roomName)
-    if err != nil {
-		if memstore.IsNotFound(err) {
+	if err != nil {
+		if models.IsNotFound(err) {
 			utils.SendError(w, "Room not found", http.StatusNotFound)
 			return
 		} else {
 			utils.SendError(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-    }
+	}
 
 	utils.SendSuccess(w, room, http.StatusOK)
 }
