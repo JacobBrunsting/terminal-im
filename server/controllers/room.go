@@ -8,8 +8,8 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/jbrunsting/terminal-im/models"
-	"github.com/jbrunsting/terminal-im/utils"
 	"github.com/jbrunsting/terminal-im/server/memstore"
+	"github.com/jbrunsting/terminal-im/utils"
 )
 
 type RoomController interface {

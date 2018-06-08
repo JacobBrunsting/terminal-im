@@ -5,7 +5,7 @@ import (
 )
 
 type Message struct {
-	Timestamp time.Time   `json:timestamp"`
-	Author    Author `json:author"`
-	Text      string `json:text"`
+	Timestamp time.Time `json:timestamp"`
+	Author    Author    `json:author"`
+	Text      string    `json:text"`
 }

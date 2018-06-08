@@ -9,8 +9,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/jbrunsting/terminal-im/server/controllers"
-	"github.com/jbrunsting/terminal-im/server/router"
 	"github.com/jbrunsting/terminal-im/server/memstore"
+	"github.com/jbrunsting/terminal-im/server/router"
 )
 
 func main() {

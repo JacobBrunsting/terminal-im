@@ -1,9 +1,9 @@
 package requests
 
 import (
-	"fmt"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/jbrunsting/terminal-im/models"
@@ -33,7 +33,7 @@ func (r *Requester) CreateRoom(name string) error {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("got bad response %v when posting room %v", resp.StatusCode, room);
+		return fmt.Errorf("got bad response %v when posting room %v", resp.StatusCode, room)
 	}
 
 	return nil
