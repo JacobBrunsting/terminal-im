@@ -2,6 +2,7 @@ package utils
 
 import (
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
 )
@@ -10,19 +11,25 @@ import (
   Follows the Google JSON style guide
 */
 
-type httpError struct {
+type HttpError struct {
 	Code    int    `json:"code"`
 	Message string `json:"message"`
 }
 
-type httpResponse struct {
+type httpResponseOutgoing struct {
 	NextLink string      `json:"nextLink,omitempty"`
 	Data     interface{} `json:"data,omitempty"`
-	Error    *httpError  `json:"error,omitempty"`
+	Error    *HttpError  `json:"error,omitempty"`
+}
+
+type HttpResponse struct {
+	NextLink string
+	Data     json.RawMessage
+	Error    *HttpError
 }
 
 func SendSuccess(w http.ResponseWriter, data interface{}, status int) {
-	resp := httpResponse{Data: data}
+	resp := httpResponseOutgoing{Data: data}
 
 	respBody, err := json.Marshal(resp)
 	if err == nil {
@@ -37,7 +44,7 @@ func SendSuccess(w http.ResponseWriter, data interface{}, status int) {
 func SendError(w http.ResponseWriter, message string, status int) {
 	w.Header().Set("Content-Type", "application/json")
 
-	resp := httpResponse{Error: &httpError{Code: status, Message: message}}
+	resp := HttpResponse{Error: &HttpError{Code: status, Message: message}}
 
 	respBody, err := json.Marshal(resp)
 	if err == nil {
@@ -47,4 +54,17 @@ func SendError(w http.ResponseWriter, message string, status int) {
 		log.Printf("error marshalling response body\n %v\n error\n %v", resp, err)
 		w.WriteHeader(http.StatusInternalServerError)
 	}
+}
+
+func GetResponse(body io.ReadCloser) (*HttpResponse, error) {
+	defer body.Close()
+
+	var resp HttpResponse
+
+	err := json.NewDecoder(body).Decode(&resp)
+	if err != nil {
+		return nil, err
+	}
+
+	return &resp, nil
 }

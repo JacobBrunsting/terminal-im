@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/jbrunsting/terminal-im/models"
+	"github.com/jbrunsting/terminal-im/utils"
 )
 
 func (r *Requester) CreateRoom(name string) error {
@@ -28,12 +29,17 @@ func (r *Requester) CreateRoom(name string) error {
 		return err
 	}
 
-	if resp.StatusCode == http.StatusConflict {
-		return &models.NameConflict{}
+	respBody, err := utils.GetResponse(resp.Body)
+	if err != nil {
+		return err
 	}
 
-	if resp.StatusCode != http.StatusOK {
-		return fmt.Errorf("got bad response %v when posting room %v", resp.StatusCode, room)
+	if respBody.Error != nil {
+		if respBody.Error.Code == http.StatusConflict {
+			return &models.NameConflict{}
+		}
+
+		return fmt.Errorf("%v: %v", respBody.Error.Code, respBody.Error.Message)
 	}
 
 	return nil
@@ -44,17 +50,24 @@ func (r *Requester) RetrieveRoom(name string) (*models.Room, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusNotFound {
-		return nil, &models.NotFound{name}
-	}
-
-	var room models.Room
-	err = json.NewDecoder(resp.Body).Decode(&room)
+	respBody, err := utils.GetResponse(resp.Body)
 	if err != nil {
 		return nil, err
 	}
 
-	return &room, nil
+	if respBody.Error != nil {
+		if respBody.Error.Code == http.StatusNotFound {
+			return nil, &models.NotFound{name}
+		}
+		return nil, fmt.Errorf("%v: %v", respBody.Error.Code, respBody.Error.Message)
+	}
+
+    var room models.Room
+    err = json.Unmarshal(respBody.Data, &room)
+    if err != nil {
+        return nil, fmt.Errorf("got error '%v' when decoding response data %v", err.Error(), string(respBody.Data))
+    }
+
+    return &room, nil
 }
