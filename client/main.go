@@ -35,21 +35,26 @@ func main() {
 		Client:  &http.Client{},
 	}
 
-	err := requester.CreateRoom(room)
-	if err != nil {
-		if models.IsNameConflict(err) {
-			log.Fatalf("Room name taken")
-		}
-		log.Fatalf(err.Error())
-	}
-
+	isNewRoom := false
 	roomObj, err := requester.RetrieveRoom(room)
 	if err != nil {
-		if models.IsNotFound(err) {
-			log.Fatalf("Room not found")
+		if !models.IsNotFound(err) {
+			log.Fatalf(err.Error())
 		}
-		log.Fatalf(err.Error())
+
+		roomObj, err = requester.CreateRoom(room)
+		isNewRoom = true
+		if err != nil {
+			if models.IsNameConflict(err) {
+				log.Fatalf("Room name taken")
+			}
+			log.Fatalf(err.Error())
+		}
 	}
 
-	log.Printf("Room is %v\n", roomObj)
+	if isNewRoom {
+		log.Printf("Created new room %v\n", roomObj)
+	} else {
+		log.Printf("Got existing room %v\n", roomObj)
+	}
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/jbrunsting/terminal-im/utils"
 )
 
-func (r *Requester) CreateRoom(name string) error {
+func (r *Requester) CreateRoom(name string) (*models.Room, error) {
 	room := models.Room{
 		Name:        name,
 		HistorySize: 100, // TODO: Change to have min/max/default value
@@ -18,7 +18,7 @@ func (r *Requester) CreateRoom(name string) error {
 
 	body, err := json.Marshal(room)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	resp, err := r.Client.Post(
@@ -26,23 +26,29 @@ func (r *Requester) CreateRoom(name string) error {
 		"application/json",
 		bytes.NewBuffer(body))
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	respBody, err := utils.GetResponse(resp.Body)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	if respBody.Error != nil {
 		if respBody.Error.Code == http.StatusConflict {
-			return &models.NameConflict{}
+			return nil, &models.NameConflict{}
 		}
 
-		return fmt.Errorf("%v: %v", respBody.Error.Code, respBody.Error.Message)
+		return nil, fmt.Errorf("%v: %v", respBody.Error.Code, respBody.Error.Message)
 	}
 
-	return nil
+	var returnedRoom models.Room
+	err = json.Unmarshal(respBody.Data, &returnedRoom)
+	if err != nil {
+		return nil, fmt.Errorf("got error '%v' when decoding response data %v", err.Error(), string(respBody.Data))
+	}
+
+	return &returnedRoom, nil
 }
 
 func (r *Requester) RetrieveRoom(name string) (*models.Room, error) {
@@ -63,11 +69,11 @@ func (r *Requester) RetrieveRoom(name string) (*models.Room, error) {
 		return nil, fmt.Errorf("%v: %v", respBody.Error.Code, respBody.Error.Message)
 	}
 
-    var room models.Room
-    err = json.Unmarshal(respBody.Data, &room)
-    if err != nil {
-        return nil, fmt.Errorf("got error '%v' when decoding response data %v", err.Error(), string(respBody.Data))
-    }
+	var room models.Room
+	err = json.Unmarshal(respBody.Data, &room)
+	if err != nil {
+		return nil, fmt.Errorf("got error '%v' when decoding response data %v", err.Error(), string(respBody.Data))
+	}
 
-    return &room, nil
+	return &room, nil
 }

@@ -45,7 +45,7 @@ func (c *roomController) PostRoom(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	utils.SendSuccess(w, nil, http.StatusOK)
+	utils.SendSuccess(w, room, http.StatusOK)
 }
 
 func (c *roomController) GetRoom(w http.ResponseWriter, r *http.Request) {
