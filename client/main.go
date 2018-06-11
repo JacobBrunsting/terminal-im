@@ -2,12 +2,22 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 	"net/http"
+	"sync"
 
+	"github.com/jbrunsting/terminal-im/client/cli"
 	"github.com/jbrunsting/terminal-im/client/requests"
 	"github.com/jbrunsting/terminal-im/models"
 )
+
+type onInput struct {
+}
+
+func (o *onInput) OnInput(input string, inputHandler cli.InputHandler) {
+	inputHandler.Println(fmt.Sprintf("Input is %v", input))
+}
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -57,4 +67,11 @@ func main() {
 	} else {
 		log.Printf("Got existing room %v\n", roomObj)
 	}
+
+	inputHandler := cli.NewInputHandler()
+	inputHandler.StartScanning(&onInput{})
+
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	wg.Wait()
 }
